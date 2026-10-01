@@ -7,6 +7,7 @@ import pandas as pd
 
 from churn import config
 from churn.data import clean
+from churn.evaluate import save_figures
 from churn.predict import load_model, predict_customer, top_drivers
 from churn.train import run
 
@@ -25,3 +26,8 @@ def test_training_end_to_end(raw_csv: Path, tmp_path: Path, raw_df: pd.DataFrame
     proba, _ = predict_customer(bundle, profile)
     assert 0 <= proba <= 1
     assert len(top_drivers(bundle, n=5)) == 5
+
+    X = clean(raw_df)[config.RAW_FEATURES]
+    y = clean(raw_df)[config.TARGET].to_numpy()
+    figures = save_figures(y, bundle["pipeline"].predict_proba(X)[:, 1], bundle, reports_dir)
+    assert all(path.exists() and path.stat().st_size > 0 for path in figures)

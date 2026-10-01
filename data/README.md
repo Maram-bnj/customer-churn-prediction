@@ -8,7 +8,12 @@ The CSV is not stored in this repository. To get it:
 
 1. Download it from Kaggle: https://www.kaggle.com/datasets/blastchar/telco-customer-churn
    (or with the Kaggle CLI: `kaggle datasets download -d blastchar/telco-customer-churn --unzip -p data/`).
-2. Place the file here, keeping its original name:
+   Alternatively, IBM publishes the same file (identical columns and 7,043 rows) on GitHub:
+   ```bash
+   curl -L -o data/WA_Fn-UseC_-Telco-Customer-Churn.csv \
+     https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv
+   ```
+2. Place the file here, keeping the Kaggle name (rename the IBM file as in the command above):
 
 ```
 data/WA_Fn-UseC_-Telco-Customer-Churn.csv

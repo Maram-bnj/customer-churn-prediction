@@ -6,6 +6,7 @@ models/*
 reports/*
 !reports/.gitkeep
 !reports/metrics.json
+!reports/*.png
 
 # Python
 __pycache__/

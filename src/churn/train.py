@@ -14,6 +14,7 @@ from sklearn.base import ClassifierMixin
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import StratifiedKFold, cross_val_predict, cross_validate
 from sklearn.pipeline import Pipeline
 from xgboost import XGBClassifier
@@ -106,6 +107,9 @@ def run(data_path: Path, models_dir: Path, reports_dir: Path) -> dict:
     accuracy_gain_pct = round(
         100 * (test_metrics["accuracy"] - baseline_accuracy) / baseline_accuracy, 2
     )
+    accuracy_gain_points = round(100 * (test_metrics["accuracy"] - baseline_accuracy), 2)
+    test_pred = (test_proba >= threshold).astype(int)
+    tn, fp, fn, tp = confusion_matrix(y_test, test_pred, labels=[0, 1]).ravel()
 
     metrics = {
         "dataset_rows": len(df),
@@ -116,7 +120,11 @@ def run(data_path: Path, models_dir: Path, reports_dir: Path) -> dict:
         "test": test_metrics,
         "test_at_0.5": test_metrics_default,
         "baseline": {"model": "majority class", "accuracy": baseline_accuracy},
+        # Relative gain: (model - baseline) / baseline. Points: model - baseline, in %.
         "accuracy_gain_vs_baseline_pct": accuracy_gain_pct,
+        "accuracy_gain_vs_baseline_points": accuracy_gain_points,
+        "test_rows": len(y_test),
+        "test_confusion_matrix": {"tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp)},
     }
 
     models_dir.mkdir(parents=True, exist_ok=True)
@@ -138,11 +146,16 @@ def print_summary(metrics: dict) -> None:
         ("Best model", metrics["best_model"]),
         ("Decision threshold", f"{metrics['threshold']:.2f}"),
         ("Test F1 (churn class)", f"{test['f1']:.2f}"),
+        ("Test weighted F1", f"{test['f1_weighted']:.2f}"),
         ("Test precision / recall", f"{test['precision']:.2f} / {test['recall']:.2f}"),
         ("Test ROC AUC", f"{test['roc_auc']:.2f}"),
         ("Test accuracy", f"{test['accuracy']:.2f}"),
         ("Baseline accuracy (majority class)", f"{metrics['baseline']['accuracy']:.2f}"),
-        ("Accuracy gain vs baseline", f"{metrics['accuracy_gain_vs_baseline_pct']:+.1f}%"),
+        (
+            "Accuracy gain vs baseline",
+            f"{metrics['accuracy_gain_vs_baseline_points']:+.1f} pts "
+            f"({metrics['accuracy_gain_vs_baseline_pct']:+.1f}% relative)",
+        ),
     ]
     print("\n| Model | CV F1 (mean +/- std) | CV ROC AUC |")
     print("|---|---|---|")
